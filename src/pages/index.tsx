@@ -1,8 +1,38 @@
 import { type NextPage } from "next";
 import Head from "next/head";
+import { useEffect, useState } from "react";
+import { uuid } from "uuidv4";
+import { env } from "~/env.mjs";
 import styles from "./index.module.css";
 
 const Home: NextPage = () => {
+  const [token, setToken] = useState<string>();
+  useEffect(() => {
+    async function login() {
+      const payload = {
+        method: "login",
+        params: {
+          appType: "Kasa_Android",
+          cloudUserName: env.NEXT_PUBLIC_TPLINK_USER,
+          cloudPassword: env.NEXT_PUBLIC_TPLINK_PASSWORD,
+          terminalUUID: uuid(),
+        },
+      };
+      await fetch("https://wap.tplinkcloud.com/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((data: { result: { token: string } }) => {
+          setToken(data.result.token);
+        });
+    }
+    login().catch((e) => console.error(e));
+  }, []);
+
   return (
     <>
       <Head>
@@ -15,6 +45,9 @@ const Home: NextPage = () => {
           <h1 className={styles.title}>
             <span className={styles.pinkSpan}>Lights</span>
           </h1>
+          <h3>
+            <span className={styles.pinkSpan}>{token ?? "Loading..."}</span>
+          </h3>
           <div className={styles.cardRow}>
             {/* <Link
               className={styles.card}
