@@ -44,12 +44,35 @@ export const deviceListResponseSchema = z.object({
   }),
 });
 
+export const updateResponseSchema = z.object({
+  error_code: z.number(),
+  result: z.object({ responseData: z.string() }),
+});
+
+export const lightStateSchema = z.object({
+  on_off: z.number(),
+  mode: z.string(),
+  hue: z.number(),
+  saturation: z.number(),
+  color_temp: z.number(),
+  brightness: z.number(),
+  err_code: z.number(),
+});
+
+export const updateResponseDataSchema = z.object({
+  "smartlife.iot.smartbulb.lightingservice": z.object({
+    transition_light_state: lightStateSchema,
+  }),
+});
+
 const Home: NextPage = () => {
   const [loginResponse, setLoginResponse] =
     useState<z.infer<typeof LoginSchema>>();
   const [deviceListResponse, setDeviceListResponse] =
     useState<z.infer<typeof deviceListResponseSchema>>();
   const [lamp, setLamp] = useState<z.infer<typeof deviceSchema>>();
+  const [latestLightState, setLatestLightState] =
+    useState<z.infer<typeof lightStateSchema>>();
 
   useEffect(() => {
     async function login() {
@@ -147,8 +170,14 @@ const Home: NextPage = () => {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log("🌴🌴🌴 ~ .then ~ data:", data);
-          // setDeviceListResponse(deviceListResponseSchema.parse(data));
+          const response = updateResponseSchema.parse(data);
+          const updateResponseData = updateResponseDataSchema.parse(
+            JSON.parse(response.result.responseData)
+          );
+          setLatestLightState(
+            updateResponseData["smartlife.iot.smartbulb.lightingservice"]
+              .transition_light_state
+          );
         });
     }
 
