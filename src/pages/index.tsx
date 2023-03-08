@@ -110,6 +110,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     if (!lamp) return;
+    if (!loginResponse) return;
 
     async function changeColor() {
       const payload = {
@@ -152,7 +153,7 @@ const Home: NextPage = () => {
     }
 
     changeColor().catch((e) => console.error(e));
-  }, [lamp]);
+  }, [lamp, loginResponse]);
 
   return (
     <>
