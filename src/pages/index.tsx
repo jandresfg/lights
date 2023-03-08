@@ -108,6 +108,52 @@ const Home: NextPage = () => {
     setLamp(lamp);
   }, [deviceListResponse]);
 
+  useEffect(() => {
+    if (!lamp) return;
+
+    async function changeColor() {
+      const payload = {
+        method: "passthrough",
+        params: {
+          deviceId: lamp?.deviceId,
+          requestData: JSON.stringify({
+            "smartlife.iot.smartbulb.lightingservice": {
+              transition_light_state: {
+                // See HSB in http://colorizer.org/
+                // brightness: 0-100
+                // hue: 0-360
+                // saturation: 0-100,
+                // color_temp: 2500-9000
+                // on_off: 1 on, 0 off
+                brightness: 43,
+                hue: 116,
+                saturation: 51,
+                color_temp: 9000,
+                on_off: 1,
+              },
+            },
+          }),
+        },
+      };
+      const url = new URL("https://wap.tplinkcloud.com/");
+      url.searchParams.append("token", loginResponse?.result.token as string);
+      await fetch(url.href, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("🌴🌴🌴 ~ .then ~ data:", data);
+          // setDeviceListResponse(deviceListResponseSchema.parse(data));
+        });
+    }
+
+    changeColor().catch((e) => console.error(e));
+  }, [lamp]);
+
   return (
     <>
       <Head>
@@ -122,11 +168,10 @@ const Home: NextPage = () => {
           </h1>
           <h3>
             <span className={styles.pinkSpan}>
-              {deviceListResponse
-                ? `Connected to ${deviceListResponse.result.deviceList[0].alias}`
-                : "Loading..."}
+              {lamp ? `Connected to ${lamp.alias}` : "Loading..."}
             </span>
           </h3>
+          <pre className={styles.pinkSpan}>{JSON.stringify(lamp, null, 3)}</pre>
           <div className={styles.cardRow}>
             {/* <Link
               className={styles.card}
