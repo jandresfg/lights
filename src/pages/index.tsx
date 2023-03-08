@@ -2,11 +2,55 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { uuid } from "uuidv4";
+import { z } from "zod";
 import { env } from "~/env.mjs";
 import styles from "./index.module.css";
 
+export const LoginSchema = z.object({
+  error_code: z.number(),
+  result: z.object({
+    accountId: z.string(),
+    regTime: z.string(),
+    countryCode: z.string(),
+    riskDetected: z.number(),
+    email: z.string(),
+    token: z.string(),
+  }),
+});
+
+export const deviceSchema = z.object({
+  deviceType: z.string(),
+  role: z.number(),
+  fwVer: z.string(),
+  appServerUrl: z.string(),
+  deviceRegion: z.string(),
+  deviceId: z.string(),
+  deviceName: z.string(),
+  deviceHwVer: z.string(),
+  alias: z.string(),
+  deviceMac: z.string(),
+  oemId: z.string(),
+  deviceModel: z.string(),
+  hwId: z.string(),
+  fwId: z.string(),
+  isSameRegion: z.boolean(),
+  status: z.number(),
+});
+
+export const deviceListResponseSchema = z.object({
+  error_code: z.number(),
+  result: z.object({
+    deviceList: z.array(deviceSchema),
+  }),
+});
+
 const Home: NextPage = () => {
-  const [token, setToken] = useState<string>();
+  const [loginResponse, setLoginResponse] =
+    useState<z.infer<typeof LoginSchema>>();
+  const [deviceListResponse, setDeviceListResponse] =
+    useState<z.infer<typeof deviceListResponseSchema>>();
+  const [lamp, setLamp] = useState<z.infer<typeof deviceSchema>>();
+
   useEffect(() => {
     async function login() {
       const payload = {
@@ -26,12 +70,45 @@ const Home: NextPage = () => {
         body: JSON.stringify(payload),
       })
         .then((response) => response.json())
-        .then((data: { result: { token: string } }) => {
-          setToken(data.result.token);
+        .then((data) => {
+          setLoginResponse(LoginSchema.parse(data));
         });
     }
     login().catch((e) => console.error(e));
   }, []);
+
+  useEffect(() => {
+    if (!loginResponse) {
+      return;
+    }
+    async function getLightBulbId() {
+      const payload = { method: "getDeviceList" };
+      const url = new URL("https://wap.tplinkcloud.com/");
+      url.searchParams.append("token", loginResponse?.result.token as string);
+      await fetch(url.href, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setDeviceListResponse(deviceListResponseSchema.parse(data));
+        });
+    }
+    getLightBulbId().catch((e) => console.error(e));
+  }, [loginResponse]);
+
+  useEffect(() => {
+    if (!deviceListResponse) {
+      return;
+    }
+    const lamp = deviceListResponse.result.deviceList.find(
+      (d) => d.deviceName === "Smart Wi-Fi LED Bulb with Color Changing"
+    );
+    setLamp(lamp);
+  }, [deviceListResponse]);
 
   return (
     <>
@@ -46,7 +123,11 @@ const Home: NextPage = () => {
             <span className={styles.pinkSpan}>Lights</span>
           </h1>
           <h3>
-            <span className={styles.pinkSpan}>{token ?? "Loading..."}</span>
+            <span className={styles.pinkSpan}>
+              {deviceListResponse
+                ? `Connected to ${deviceListResponse.result.deviceList[0].alias}`
+                : "Loading..."}
+            </span>
           </h3>
           <div className={styles.cardRow}>
             {/* <Link
