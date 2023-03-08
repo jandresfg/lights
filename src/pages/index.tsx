@@ -78,9 +78,8 @@ const Home: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!loginResponse) {
-      return;
-    }
+    if (!loginResponse) return;
+
     async function getLightBulbId() {
       const payload = { method: "getDeviceList" };
       const url = new URL("https://wap.tplinkcloud.com/");
@@ -101,9 +100,8 @@ const Home: NextPage = () => {
   }, [loginResponse]);
 
   useEffect(() => {
-    if (!deviceListResponse) {
-      return;
-    }
+    if (!deviceListResponse) return;
+
     const lamp = deviceListResponse.result.deviceList.find(
       (d) => d.deviceName === "Smart Wi-Fi LED Bulb with Color Changing"
     );
