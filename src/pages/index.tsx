@@ -1,7 +1,7 @@
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { uuid } from "uuidv4";
+import { v4 } from "uuid";
 import { z } from "zod";
 import { env } from "~/env.mjs";
 import styles from "./index.module.css";
@@ -59,7 +59,7 @@ const Home: NextPage = () => {
           appType: "Kasa_Android",
           cloudUserName: env.NEXT_PUBLIC_TPLINK_USER,
           cloudPassword: env.NEXT_PUBLIC_TPLINK_PASSWORD,
-          terminalUUID: uuid(),
+          terminalUUID: v4(),
         },
       };
       await fetch("https://wap.tplinkcloud.com/", {
