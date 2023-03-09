@@ -2,6 +2,7 @@ import { ActionIcon } from "@mantine/core";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
+import { BsLightbulb, BsLightbulbOffFill } from "react-icons/bs";
 import { FaRandom } from "react-icons/fa";
 import { v4 } from "uuid";
 import { z } from "zod";
@@ -168,6 +169,11 @@ const Home: NextPage = () => {
     })
       .then((response) => response.json())
       .then((data) => {
+        // if on_off is 0 the response schema changes
+        if (newState.on_off === 0) {
+          setLatestLightState((curr) => ({ ...curr!, on_off: 0 }));
+          return;
+        }
         const response = updateResponseSchema.parse(data);
         const updateResponseData = updateResponseDataSchema.parse(
           JSON.parse(response.result.responseData)
@@ -217,36 +223,69 @@ const Home: NextPage = () => {
               Lights
             </span>
           </h1>
-          <h2>
-            <span
+          {!lamp && (
+            <h2>
+              <span
+                style={{
+                  color: hslString,
+                }}
+              >
+                Connecting...
+              </span>
+            </h2>
+          )}
+          {lamp && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
               style={{
                 color: hslString,
               }}
+              onClick={() => {
+                if (lamp) {
+                  setChangingColor(true);
+                  changeColor()
+                    .catch((e) => console.error(e))
+                    .finally(() => {
+                      setChangingColor(false);
+                    });
+                }
+              }}
+              disabled={changingColor}
             >
-              {lamp ? `Connected to ${lamp.alias}` : "Loading..."}
-            </span>
-          </h2>
-          <ActionIcon
-            size="xl"
-            radius="xl"
-            variant="outline"
-            style={{
-              color: hslString,
-            }}
-            onClick={() => {
-              if (lamp) {
-                setChangingColor(true);
-                changeColor()
-                  .catch((e) => console.error(e))
-                  .finally(() => {
-                    setChangingColor(false);
-                  });
-              }
-            }}
-            disabled={changingColor}
-          >
-            <FaRandom size="1.7rem" />
-          </ActionIcon>
+              <FaRandom size="1.7rem" title="random color" />
+            </ActionIcon>
+          )}
+
+          {lamp && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
+              style={{
+                color: hslString,
+              }}
+              onClick={() => {
+                if (lamp) {
+                  setChangingColor(true);
+                  const newValue = latestLightState?.on_off ? 0 : 1;
+                  changeColor({ ...latestLightState, on_off: newValue })
+                    .catch((e) => console.error(e))
+                    .finally(() => {
+                      setChangingColor(false);
+                    });
+                }
+              }}
+              disabled={changingColor}
+            >
+              {latestLightState?.on_off ? (
+                <BsLightbulbOffFill size="1.7rem" title="turn off" />
+              ) : (
+                <BsLightbulb size="1.7rem" title="turn on" />
+              )}
+            </ActionIcon>
+          )}
           {/* <pre
             style={{
               color: hslString,
