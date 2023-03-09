@@ -187,7 +187,7 @@ const Home: NextPage = () => {
 
   const hslString = useMemo(
     () =>
-      latestLightState
+      latestLightState && latestLightState.on_off
         ? `hsl(${latestLightState.hue} ${latestLightState.saturation}% ${latestLightState.brightness}%)`
         : "hsl(280 100% 70%)",
     [latestLightState]
@@ -195,7 +195,7 @@ const Home: NextPage = () => {
 
   const gradientString = useMemo(
     () =>
-      latestLightState
+      latestLightState && latestLightState.on_off
         ? `linear-gradient(to bottom, hsl(${latestLightState.hue} ${
             latestLightState.saturation
           }% ${Math.floor(latestLightState.brightness * 0.8)}%), hsl(${
