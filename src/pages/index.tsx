@@ -136,10 +136,10 @@ const Home: NextPage = () => {
    */
   async function changeColor(
     newState: Partial<z.infer<typeof lightStateSchema>> = {
-      brightness: Math.floor(Math.random() * 101),
+      brightness: 50,
       hue: Math.floor(Math.random() * 361),
       saturation: Math.floor(Math.random() * 101),
-      color_temp: Math.floor(Math.random() * 6501) + 2500,
+      color_temp: 0,
       on_off: 1,
     }
   ) {
@@ -189,9 +189,9 @@ const Home: NextPage = () => {
       latestLightState
         ? `linear-gradient(to bottom, hsl(${latestLightState.hue} ${
             latestLightState.saturation
-          }% ${Math.floor(latestLightState.brightness * 0.8)}%, hsl(${
+          }% ${Math.floor(latestLightState.brightness * 0.8)}%), hsl(${
             latestLightState.hue
-          } ${latestLightState.saturation}% 0%))`
+          } ${latestLightState.saturation}% 10%))`
         : "linear-gradient(to bottom, #2e026d, #15162c)",
     [latestLightState]
   );
