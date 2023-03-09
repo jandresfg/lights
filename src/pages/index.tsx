@@ -223,62 +223,69 @@ const Home: NextPage = () => {
               Lights
             </span>
           </h1>
-          <h2>
-            <span
+          {!lamp && (
+            <h2>
+              <span
+                style={{
+                  color: hslString,
+                }}
+              >
+                Connecting...
+              </span>
+            </h2>
+          )}
+          {lamp && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
               style={{
                 color: hslString,
               }}
+              onClick={() => {
+                if (lamp) {
+                  setChangingColor(true);
+                  changeColor()
+                    .catch((e) => console.error(e))
+                    .finally(() => {
+                      setChangingColor(false);
+                    });
+                }
+              }}
+              disabled={changingColor}
             >
-              {lamp ? `Connected to ${lamp.alias}` : "Loading..."}
-            </span>
-          </h2>
-          <ActionIcon
-            size="xl"
-            radius="xl"
-            variant="outline"
-            style={{
-              color: hslString,
-            }}
-            onClick={() => {
-              if (lamp) {
-                setChangingColor(true);
-                changeColor()
-                  .catch((e) => console.error(e))
-                  .finally(() => {
-                    setChangingColor(false);
-                  });
-              }
-            }}
-            disabled={changingColor}
-          >
-            <FaRandom size="1.7rem" title="random color" />
-          </ActionIcon>
-          <ActionIcon
-            size="xl"
-            radius="xl"
-            variant="outline"
-            style={{
-              color: hslString,
-            }}
-            onClick={() => {
-              if (lamp) {
-                setChangingColor(true);
-                const newValue = latestLightState?.on_off ? 0 : 1;
-                changeColor({ ...latestLightState, on_off: newValue })
-                  .catch((e) => console.error(e))
-                  .finally(() => {
-                    setChangingColor(false);
-                  });
-              }
-            }}
-            disabled={changingColor}
-          >
-            {latestLightState?.on_off ? (
-              <BsLightbulbOffFill size="1.7rem" title="turn off" />
-            ) : (
-              <BsLightbulb size="1.7rem" title="turn on" />
-            )}
-          </ActionIcon>
+              <FaRandom size="1.7rem" title="random color" />
+            </ActionIcon>
+          )}
+
+          {lamp && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
+              style={{
+                color: hslString,
+              }}
+              onClick={() => {
+                if (lamp) {
+                  setChangingColor(true);
+                  const newValue = latestLightState?.on_off ? 0 : 1;
+                  changeColor({ ...latestLightState, on_off: newValue })
+                    .catch((e) => console.error(e))
+                    .finally(() => {
+                      setChangingColor(false);
+                    });
+                }
+              }}
+              disabled={changingColor}
+            >
+              {latestLightState?.on_off ? (
+                <BsLightbulbOffFill size="1.7rem" title="turn off" />
+              ) : (
+                <BsLightbulb size="1.7rem" title="turn on" />
+              )}
+            </ActionIcon>
+          )}
           {/* <pre
             style={{
               color: hslString,
