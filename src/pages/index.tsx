@@ -2,7 +2,12 @@ import { ActionIcon } from "@mantine/core";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
-import { BsLightbulb, BsLightbulbOffFill } from "react-icons/bs";
+import {
+  BsLightbulb,
+  BsLightbulbOffFill,
+  BsPauseFill,
+  BsPlayFill,
+} from "react-icons/bs";
 import { FaRandom } from "react-icons/fa";
 import { v4 } from "uuid";
 import { z } from "zod";
@@ -77,6 +82,8 @@ const Home: NextPage = () => {
   const [latestLightState, setLatestLightState] =
     useState<z.infer<typeof lightStateSchema>>();
   const [changingColor, setChangingColor] = useState(false);
+  const [autoSwitch, setAutoSwitch] = useState(false);
+  const [savedInterval, setSavedInterval] = useState<NodeJS.Timer>();
 
   useEffect(() => {
     async function login() {
@@ -134,6 +141,24 @@ const Home: NextPage = () => {
     );
     setLamp(lamp);
   }, [deviceListResponse]);
+
+  useEffect(() => {
+    if (autoSwitch) {
+      changeColor().catch((e) => console.error(e));
+      const a = setInterval(() => {
+        changeColor().catch((e) => console.error(e));
+      }, 2000);
+      setSavedInterval(a);
+
+      return () => {
+        clearInterval(a);
+      };
+    }
+
+    if (!autoSwitch && savedInterval) {
+      clearInterval(savedInterval);
+    }
+  }, [autoSwitch]);
 
   /**
    * @param newState brightness: 0-100, hue: 0-360, saturation: 0-100, color_temp: 2500-9000, on_off: 1 on, 0 off
@@ -234,7 +259,7 @@ const Home: NextPage = () => {
               </span>
             </h2>
           )}
-          {lamp && (
+          {lamp && !autoSwitch && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -243,14 +268,12 @@ const Home: NextPage = () => {
                 color: hslString,
               }}
               onClick={() => {
-                if (lamp) {
-                  setChangingColor(true);
-                  changeColor()
-                    .catch((e) => console.error(e))
-                    .finally(() => {
-                      setChangingColor(false);
-                    });
-                }
+                setChangingColor(true);
+                changeColor()
+                  .catch((e) => console.error(e))
+                  .finally(() => {
+                    setChangingColor(false);
+                  });
               }}
               disabled={changingColor}
             >
@@ -267,15 +290,33 @@ const Home: NextPage = () => {
                 color: hslString,
               }}
               onClick={() => {
-                if (lamp) {
-                  setChangingColor(true);
-                  const newValue = latestLightState?.on_off ? 0 : 1;
-                  changeColor({ ...latestLightState, on_off: newValue })
-                    .catch((e) => console.error(e))
-                    .finally(() => {
-                      setChangingColor(false);
-                    });
-                }
+                setAutoSwitch((prev) => !prev);
+              }}
+            >
+              {autoSwitch ? (
+                <BsPauseFill size="1.7rem" title="stop auto-switch" />
+              ) : (
+                <BsPlayFill size="1.7rem" title="start auto-switch" />
+              )}
+            </ActionIcon>
+          )}
+
+          {lamp && !autoSwitch && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
+              style={{
+                color: hslString,
+              }}
+              onClick={() => {
+                setChangingColor(true);
+                const newValue = latestLightState?.on_off ? 0 : 1;
+                changeColor({ ...latestLightState, on_off: newValue })
+                  .catch((e) => console.error(e))
+                  .finally(() => {
+                    setChangingColor(false);
+                  });
               }}
               disabled={changingColor}
             >
