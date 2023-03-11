@@ -2,6 +2,8 @@ import { ActionIcon } from "@mantine/core";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
+import { ChromePicker, type ColorResult } from "react-color";
+import { BiArrowBack } from "react-icons/bi";
 import {
   BsLightbulb,
   BsLightbulbOffFill,
@@ -9,6 +11,7 @@ import {
   BsPlayFill,
 } from "react-icons/bs";
 import { FaRandom } from "react-icons/fa";
+import { MdColorLens } from "react-icons/md";
 import { v4 } from "uuid";
 import { z } from "zod";
 import { env } from "~/env.mjs";
@@ -84,6 +87,7 @@ const Home: NextPage = () => {
   const [changingColor, setChangingColor] = useState(false);
   const [autoSwitching, setAutoSwitching] = useState(false);
   const [savedInterval, setSavedInterval] = useState<NodeJS.Timer>();
+  const [manuallySelecting, setManuallySelecting] = useState(false);
 
   useEffect(() => {
     async function login() {
@@ -281,7 +285,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
-          {lamp && (
+          {lamp && !manuallySelecting && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -302,6 +306,45 @@ const Home: NextPage = () => {
           )}
 
           {lamp && !autoSwitching && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
+              style={{
+                color: hslString,
+              }}
+              onClick={() => {
+                setManuallySelecting((prev) => !prev);
+              }}
+            >
+              {manuallySelecting ? (
+                <BiArrowBack size="1.7rem" title="go back" />
+              ) : (
+                <MdColorLens size="1.7rem" title="select color" />
+              )}
+            </ActionIcon>
+          )}
+
+          {manuallySelecting && (
+            <ChromePicker
+              color={{
+                h: Number(latestLightState?.hue),
+                s: Number(latestLightState?.saturation) / 100,
+                l: Number(latestLightState?.brightness) / 100,
+              }}
+              onChangeComplete={(color: ColorResult) => {
+                changeColor({
+                  hue: Math.floor(color.hsl.h),
+                  saturation: Math.floor(color.hsl.s * 100),
+                  brightness: Math.floor(color.hsl.l * 100),
+                  on_off: 1,
+                }).catch((e) => console.error(e));
+              }}
+              disableAlpha
+            />
+          )}
+
+          {lamp && !autoSwitching && !manuallySelecting && (
             <ActionIcon
               size="xl"
               radius="xl"
