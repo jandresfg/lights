@@ -82,7 +82,7 @@ const Home: NextPage = () => {
   const [latestLightState, setLatestLightState] =
     useState<z.infer<typeof lightStateSchema>>();
   const [changingColor, setChangingColor] = useState(false);
-  const [autoSwitch, setAutoSwitch] = useState(false);
+  const [autoSwitching, setAutoSwitching] = useState(false);
   const [savedInterval, setSavedInterval] = useState<NodeJS.Timer>();
 
   useEffect(() => {
@@ -143,7 +143,7 @@ const Home: NextPage = () => {
   }, [deviceListResponse]);
 
   useEffect(() => {
-    if (autoSwitch) {
+    if (autoSwitching) {
       changeColor().catch((e) => console.error(e));
       const a = setInterval(() => {
         changeColor().catch((e) => console.error(e));
@@ -155,10 +155,10 @@ const Home: NextPage = () => {
       };
     }
 
-    if (!autoSwitch && savedInterval) {
+    if (!autoSwitching && savedInterval) {
       clearInterval(savedInterval);
     }
-  }, [autoSwitch]);
+  }, [autoSwitching]);
 
   /**
    * @param newState brightness: 0-100, hue: 0-360, saturation: 0-100, color_temp: 2500-9000, on_off: 1 on, 0 off
@@ -259,7 +259,7 @@ const Home: NextPage = () => {
               </span>
             </h2>
           )}
-          {lamp && !autoSwitch && (
+          {lamp && !autoSwitching && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -290,10 +290,10 @@ const Home: NextPage = () => {
                 color: hslString,
               }}
               onClick={() => {
-                setAutoSwitch((prev) => !prev);
+                setAutoSwitching((prev) => !prev);
               }}
             >
-              {autoSwitch ? (
+              {autoSwitching ? (
                 <BsPauseFill size="1.7rem" title="stop auto-switch" />
               ) : (
                 <BsPlayFill size="1.7rem" title="start auto-switch" />
@@ -301,7 +301,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
-          {lamp && !autoSwitch && (
+          {lamp && !autoSwitching && (
             <ActionIcon
               size="xl"
               radius="xl"
