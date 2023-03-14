@@ -1,7 +1,8 @@
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, RingProgress, Slider, Text } from "@mantine/core";
+import { useInterval } from "@mantine/hooks";
 import { type NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChromePicker, type ColorResult } from "react-color";
 import { BiArrowBack } from "react-icons/bi";
 import {
@@ -85,8 +86,9 @@ const Home: NextPage = () => {
   const [latestLightState, setLatestLightState] =
     useState<z.infer<typeof lightStateSchema>>();
   const [changingColor, setChangingColor] = useState(false);
-  const [autoSwitching, setAutoSwitching] = useState(false);
-  const [savedInterval, setSavedInterval] = useState<NodeJS.Timer>();
+  const [previousFreq, setPreviousFreq] = useState(2000);
+  const [autoSwitchFreq, setAutoSwitchFreq] = useState(previousFreq);
+  const [remainingSeconds, setRemainingSeconds] = useState(previousFreq);
   const [manuallySelecting, setManuallySelecting] = useState(false);
 
   useEffect(() => {
@@ -146,23 +148,30 @@ const Home: NextPage = () => {
     setLamp(lamp);
   }, [deviceListResponse]);
 
+  const remainingSecondsRef = useRef<number>();
+
   useEffect(() => {
-    if (autoSwitching) {
+    remainingSecondsRef.current = remainingSeconds;
+  });
+
+  const autoSwitchInterval = useInterval(() => {
+    if (remainingSecondsRef.current && remainingSecondsRef.current > 0) {
+      setRemainingSeconds((val) => val - 200);
+    } else {
       changeColor().catch((e) => console.error(e));
-      const a = setInterval(() => {
-        changeColor().catch((e) => console.error(e));
-      }, 2000);
-      setSavedInterval(a);
-
-      return () => {
-        clearInterval(a);
-      };
+      setRemainingSeconds(autoSwitchFreq);
     }
+  }, 200);
 
-    if (!autoSwitching && savedInterval) {
-      clearInterval(savedInterval);
+  useEffect(() => {
+    if (autoSwitchFreq !== previousFreq) {
+      autoSwitchInterval.stop();
+      setRemainingSeconds(autoSwitchFreq);
+      changeColor().catch((e) => console.error(e));
+      autoSwitchInterval.start();
+      setPreviousFreq(autoSwitchFreq);
     }
-  }, [autoSwitching]);
+  }, [autoSwitchFreq]);
 
   /**
    * @param newState brightness: 0-100, hue: 0-360, saturation: 0-100, color_temp: 2500-9000, on_off: 1 on, 0 off
@@ -252,6 +261,8 @@ const Home: NextPage = () => {
               Lights
             </span>
           </h1>
+
+          {/* "loading..." subtitle */}
           {!lamp && (
             <h2>
               <span
@@ -263,7 +274,9 @@ const Home: NextPage = () => {
               </span>
             </h2>
           )}
-          {lamp && !autoSwitching && (
+
+          {/* random button */}
+          {lamp && !autoSwitchInterval.active && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -285,6 +298,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
+          {/* play/pause button */}
           {lamp && !manuallySelecting && (
             <ActionIcon
               size="xl"
@@ -293,11 +307,9 @@ const Home: NextPage = () => {
               style={{
                 color: hslString,
               }}
-              onClick={() => {
-                setAutoSwitching((prev) => !prev);
-              }}
+              onClick={autoSwitchInterval.toggle}
             >
-              {autoSwitching ? (
+              {autoSwitchInterval.active ? (
                 <BsPauseFill size="1.7rem" title="stop auto-switch" />
               ) : (
                 <BsPlayFill size="1.7rem" title="start auto-switch" />
@@ -305,7 +317,51 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
-          {lamp && !autoSwitching && (
+          {/* auto-switch frequency slider */}
+          {autoSwitchInterval.active && (
+            <>
+              <Slider
+                min={2}
+                max={10}
+                step={0.5}
+                value={autoSwitchFreq / 1000}
+                onChangeEnd={(value) => {
+                  setAutoSwitchFreq(value * 1000);
+                }}
+                label={(value) => `${value} s`}
+                labelAlwaysOn
+                style={{ width: "inherit" }}
+                thumbSize={35}
+                styles={() => ({
+                  bar: {
+                    backgroundColor: hslString,
+                  },
+                  thumb: {
+                    borderColor: hslString,
+                  },
+                })}
+              />
+              <RingProgress
+                sections={[
+                  {
+                    value:
+                      100 -
+                      Math.floor((remainingSeconds / autoSwitchFreq) * 100),
+                    color: hslString,
+                  },
+                ]}
+                label={
+                  <Text color={hslString} weight={700} align="center" size="xl">
+                    {(autoSwitchFreq - remainingSeconds) / 1000} s
+                  </Text>
+                }
+                roundCaps
+              />
+            </>
+          )}
+
+          {/* manual select button */}
+          {lamp && !autoSwitchInterval.active && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -325,6 +381,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
+          {/* manual select color picker */}
           {manuallySelecting && (
             <ChromePicker
               color={{
@@ -344,7 +401,8 @@ const Home: NextPage = () => {
             />
           )}
 
-          {lamp && !autoSwitching && !manuallySelecting && (
+          {/* on/off button */}
+          {lamp && !autoSwitchInterval.active && !manuallySelecting && (
             <ActionIcon
               size="xl"
               radius="xl"
