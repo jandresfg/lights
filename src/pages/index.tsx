@@ -1,4 +1,4 @@
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, Slider } from "@mantine/core";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
@@ -86,6 +86,8 @@ const Home: NextPage = () => {
     useState<z.infer<typeof lightStateSchema>>();
   const [changingColor, setChangingColor] = useState(false);
   const [autoSwitching, setAutoSwitching] = useState(false);
+  const [previousFreq, setPreviousFreq] = useState(2);
+  const [autoSwitchFreq, setAutoSwitchFreq] = useState(previousFreq);
   const [savedInterval, setSavedInterval] = useState<NodeJS.Timer>();
   const [manuallySelecting, setManuallySelecting] = useState(false);
 
@@ -151,7 +153,7 @@ const Home: NextPage = () => {
       changeColor().catch((e) => console.error(e));
       const a = setInterval(() => {
         changeColor().catch((e) => console.error(e));
-      }, 2000);
+      }, autoSwitchFreq * 1000);
       setSavedInterval(a);
 
       return () => {
@@ -161,8 +163,25 @@ const Home: NextPage = () => {
 
     if (!autoSwitching && savedInterval) {
       clearInterval(savedInterval);
+      setSavedInterval(undefined);
     }
   }, [autoSwitching]);
+
+  useEffect(() => {
+    if (savedInterval) {
+      clearInterval(savedInterval);
+      setSavedInterval(undefined);
+    }
+
+    if (autoSwitchFreq !== previousFreq) {
+      changeColor().catch((e) => console.error(e));
+      const a = setInterval(() => {
+        changeColor().catch((e) => console.error(e));
+      }, autoSwitchFreq * 1000);
+      setSavedInterval(a);
+      setPreviousFreq(autoSwitchFreq);
+    }
+  }, [autoSwitchFreq]);
 
   /**
    * @param newState brightness: 0-100, hue: 0-360, saturation: 0-100, color_temp: 2500-9000, on_off: 1 on, 0 off
@@ -303,6 +322,30 @@ const Home: NextPage = () => {
                 <BsPlayFill size="1.7rem" title="start auto-switch" />
               )}
             </ActionIcon>
+          )}
+
+          {autoSwitching && (
+            <Slider
+              min={2}
+              max={10}
+              step={0.5}
+              value={autoSwitchFreq}
+              onChangeEnd={(value) => {
+                setAutoSwitchFreq(value);
+              }}
+              label={(value) => `${value}s`}
+              labelAlwaysOn
+              style={{ width: "inherit" }}
+              thumbSize={35}
+              styles={() => ({
+                bar: {
+                  backgroundColor: hslString,
+                },
+                thumb: {
+                  borderColor: hslString,
+                },
+              })}
+            />
           )}
 
           {lamp && !autoSwitching && (
