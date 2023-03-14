@@ -1,7 +1,8 @@
-import { ActionIcon, Slider } from "@mantine/core";
+import { ActionIcon, RingProgress, Slider, Text } from "@mantine/core";
+import { useInterval } from "@mantine/hooks";
 import { type NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChromePicker, type ColorResult } from "react-color";
 import { BiArrowBack } from "react-icons/bi";
 import {
@@ -85,10 +86,9 @@ const Home: NextPage = () => {
   const [latestLightState, setLatestLightState] =
     useState<z.infer<typeof lightStateSchema>>();
   const [changingColor, setChangingColor] = useState(false);
-  const [autoSwitching, setAutoSwitching] = useState(false);
-  const [previousFreq, setPreviousFreq] = useState(2);
+  const [previousFreq, setPreviousFreq] = useState(2000);
   const [autoSwitchFreq, setAutoSwitchFreq] = useState(previousFreq);
-  const [savedInterval, setSavedInterval] = useState<NodeJS.Timer>();
+  const [remainingSeconds, setRemainingSeconds] = useState(previousFreq);
   const [manuallySelecting, setManuallySelecting] = useState(false);
 
   useEffect(() => {
@@ -148,37 +148,27 @@ const Home: NextPage = () => {
     setLamp(lamp);
   }, [deviceListResponse]);
 
+  const remainingSecondsRef = useRef<number>();
+
   useEffect(() => {
-    if (autoSwitching) {
+    remainingSecondsRef.current = remainingSeconds;
+  });
+
+  const autoSwitchInterval = useInterval(() => {
+    if (remainingSecondsRef.current && remainingSecondsRef.current > 0) {
+      setRemainingSeconds((val) => val - 200);
+    } else {
       changeColor().catch((e) => console.error(e));
-      const a = setInterval(() => {
-        changeColor().catch((e) => console.error(e));
-      }, autoSwitchFreq * 1000);
-      setSavedInterval(a);
-
-      return () => {
-        clearInterval(a);
-      };
+      setRemainingSeconds(autoSwitchFreq);
     }
-
-    if (!autoSwitching && savedInterval) {
-      clearInterval(savedInterval);
-      setSavedInterval(undefined);
-    }
-  }, [autoSwitching]);
+  }, 200);
 
   useEffect(() => {
-    if (savedInterval) {
-      clearInterval(savedInterval);
-      setSavedInterval(undefined);
-    }
-
     if (autoSwitchFreq !== previousFreq) {
+      autoSwitchInterval.stop();
+      setRemainingSeconds(autoSwitchFreq);
       changeColor().catch((e) => console.error(e));
-      const a = setInterval(() => {
-        changeColor().catch((e) => console.error(e));
-      }, autoSwitchFreq * 1000);
-      setSavedInterval(a);
+      autoSwitchInterval.start();
       setPreviousFreq(autoSwitchFreq);
     }
   }, [autoSwitchFreq]);
@@ -286,7 +276,7 @@ const Home: NextPage = () => {
           )}
 
           {/* random button */}
-          {lamp && !autoSwitching && (
+          {lamp && !autoSwitchInterval.active && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -317,11 +307,9 @@ const Home: NextPage = () => {
               style={{
                 color: hslString,
               }}
-              onClick={() => {
-                setAutoSwitching((prev) => !prev);
-              }}
+              onClick={autoSwitchInterval.toggle}
             >
-              {autoSwitching ? (
+              {autoSwitchInterval.active ? (
                 <BsPauseFill size="1.7rem" title="stop auto-switch" />
               ) : (
                 <BsPlayFill size="1.7rem" title="start auto-switch" />
@@ -330,32 +318,50 @@ const Home: NextPage = () => {
           )}
 
           {/* auto-switch frequency slider */}
-          {autoSwitching && (
-            <Slider
-              min={2}
-              max={10}
-              step={0.5}
-              value={autoSwitchFreq}
-              onChangeEnd={(value) => {
-                setAutoSwitchFreq(value);
-              }}
-              label={(value) => `${value}s`}
-              labelAlwaysOn
-              style={{ width: "inherit" }}
-              thumbSize={35}
-              styles={() => ({
-                bar: {
-                  backgroundColor: hslString,
-                },
-                thumb: {
-                  borderColor: hslString,
-                },
-              })}
-            />
+          {autoSwitchInterval.active && (
+            <>
+              <Slider
+                min={2}
+                max={10}
+                step={0.5}
+                value={autoSwitchFreq / 1000}
+                onChangeEnd={(value) => {
+                  setAutoSwitchFreq(value * 1000);
+                }}
+                label={(value) => `${value} s`}
+                labelAlwaysOn
+                style={{ width: "inherit" }}
+                thumbSize={35}
+                styles={() => ({
+                  bar: {
+                    backgroundColor: hslString,
+                  },
+                  thumb: {
+                    borderColor: hslString,
+                  },
+                })}
+              />
+              <RingProgress
+                sections={[
+                  {
+                    value:
+                      100 -
+                      Math.floor((remainingSeconds / autoSwitchFreq) * 100),
+                    color: hslString,
+                  },
+                ]}
+                label={
+                  <Text color={hslString} weight={700} align="center" size="xl">
+                    {(autoSwitchFreq - remainingSeconds) / 1000} s
+                  </Text>
+                }
+                roundCaps
+              />
+            </>
           )}
 
           {/* manual select button */}
-          {lamp && !autoSwitching && (
+          {lamp && !autoSwitchInterval.active && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -396,7 +402,7 @@ const Home: NextPage = () => {
           )}
 
           {/* on/off button */}
-          {lamp && !autoSwitching && !manuallySelecting && (
+          {lamp && !autoSwitchInterval.active && !manuallySelecting && (
             <ActionIcon
               size="xl"
               radius="xl"
