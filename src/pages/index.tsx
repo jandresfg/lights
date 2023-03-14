@@ -271,6 +271,8 @@ const Home: NextPage = () => {
               Lights
             </span>
           </h1>
+
+          {/* "loading..." subtitle */}
           {!lamp && (
             <h2>
               <span
@@ -282,6 +284,8 @@ const Home: NextPage = () => {
               </span>
             </h2>
           )}
+
+          {/* random button */}
           {lamp && !autoSwitching && (
             <ActionIcon
               size="xl"
@@ -304,6 +308,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
+          {/* play/pause button */}
           {lamp && !manuallySelecting && (
             <ActionIcon
               size="xl"
@@ -324,6 +329,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
+          {/* auto-switch frequency slider */}
           {autoSwitching && (
             <Slider
               min={2}
@@ -348,6 +354,7 @@ const Home: NextPage = () => {
             />
           )}
 
+          {/* manual select button */}
           {lamp && !autoSwitching && (
             <ActionIcon
               size="xl"
@@ -368,6 +375,7 @@ const Home: NextPage = () => {
             </ActionIcon>
           )}
 
+          {/* manual select color picker */}
           {manuallySelecting && (
             <ChromePicker
               color={{
@@ -387,6 +395,7 @@ const Home: NextPage = () => {
             />
           )}
 
+          {/* on/off button */}
           {lamp && !autoSwitching && !manuallySelecting && (
             <ActionIcon
               size="xl"
