@@ -1,5 +1,5 @@
-import { ActionIcon, RingProgress, Slider, Text } from "@mantine/core";
-import { useInterval } from "@mantine/hooks";
+import { ActionIcon, Modal, RingProgress, Slider, Text } from "@mantine/core";
+import { useDisclosure, useInterval } from "@mantine/hooks";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -12,6 +12,7 @@ import {
   BsPlayFill,
 } from "react-icons/bs";
 import { FaRandom } from "react-icons/fa";
+import { IoMdInformation } from "react-icons/io";
 import { MdColorLens } from "react-icons/md";
 import { v4 } from "uuid";
 import { z } from "zod";
@@ -110,6 +111,8 @@ const Home: NextPage = () => {
   const [autoSwitchFreq, setAutoSwitchFreq] = useState(previousFreq);
   const [remainingSeconds, setRemainingSeconds] = useState(previousFreq);
   const [manuallySelecting, setManuallySelecting] = useState(false);
+
+  const [opened, { open, close }] = useDisclosure(false); // disclosure for info modal
 
   useEffect(() => {
     async function login() {
@@ -519,37 +522,44 @@ const Home: NextPage = () => {
               )}
             </ActionIcon>
           )}
-          {/* <pre
-            style={{
-              color: hslString,
-            }}
-          >
-            {JSON.stringify(latestLightState, null, 3)}
-          </pre> */}
-          <div className={styles.cardRow}>
-            {/* <Link
-              className={styles.card}
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className={styles.cardTitle}>First Steps →</h3>
-              <div className={styles.cardText}>
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className={styles.card}
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className={styles.cardTitle}>Documentation →</h3>
-              <div className={styles.cardText}>
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link> */}
-          </div>
+
+          {/* info button and modal */}
+          {lamp && (
+            <>
+              <ActionIcon
+                size="xl"
+                radius="xl"
+                variant="outline"
+                style={{
+                  color: hslString,
+                }}
+                onClick={open}
+              >
+                <IoMdInformation size="1.7rem" title="info" />
+              </ActionIcon>
+              <Modal
+                opened={opened}
+                onClose={close}
+                centered
+                withCloseButton={false}
+              >
+                <pre
+                  style={{
+                    color: hslString,
+                  }}
+                >
+                  {JSON.stringify(lamp, null, 3)}
+                </pre>
+                <pre
+                  style={{
+                    color: hslString,
+                  }}
+                >
+                  {JSON.stringify(latestLightState, null, 3)}
+                </pre>
+              </Modal>
+            </>
+          )}
         </div>
       </main>
     </>
