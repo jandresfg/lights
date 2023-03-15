@@ -166,9 +166,13 @@ const Home: NextPage = () => {
       (d) => d.deviceName === "Smart Wi-Fi LED Bulb with Color Changing"
     );
     setLamp(lamp);
+  }, [deviceListResponse]);
+
+  useEffect(() => {
+    if (!lamp) return;
 
     getLightState().catch((e) => console.error(e));
-  }, [deviceListResponse]);
+  }, [lamp]);
 
   const remainingSecondsRef = useRef<number>();
 
