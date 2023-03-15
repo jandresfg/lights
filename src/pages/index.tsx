@@ -342,7 +342,7 @@ const Home: NextPage = () => {
           )}
 
           {/* random button */}
-          {lamp && !autoSwitchInterval.active && (
+          {latestLightState?.on_off === 1 && !autoSwitchInterval.active && (
             <ActionIcon
               size="xl"
               radius="xl"
@@ -432,7 +432,7 @@ const Home: NextPage = () => {
           )}
 
           {/* manual select button */}
-          {lamp && !autoSwitchInterval.active && (
+          {latestLightState?.on_off === 1 && !autoSwitchInterval.active && (
             <ActionIcon
               size="xl"
               radius="xl"
