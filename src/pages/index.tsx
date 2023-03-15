@@ -77,6 +77,19 @@ export const updateResponseDataSchema = z.object({
   }),
 });
 
+export const getLightStateResponseDataSchema = z.object({
+  "smartlife.iot.smartbulb.lightingservice": z.object({
+    get_light_state: z.discriminatedUnion("on_off", [
+      z.object({
+        on_off: z.literal(0),
+        err_code: z.number(),
+        dft_on_state: lightStateSchema.omit({ on_off: true, err_code: true }),
+      }),
+      lightStateSchema.merge(z.object({ on_off: z.literal(1) })),
+    ]),
+  }),
+});
+
 const Home: NextPage = () => {
   const [loginResponse, setLoginResponse] =
     useState<z.infer<typeof LoginSchema>>();
@@ -146,6 +159,8 @@ const Home: NextPage = () => {
       (d) => d.deviceName === "Smart Wi-Fi LED Bulb with Color Changing"
     );
     setLamp(lamp);
+
+    getLightState().catch((e) => console.error(e));
   }, [deviceListResponse]);
 
   const remainingSecondsRef = useRef<number>();
@@ -219,6 +234,57 @@ const Home: NextPage = () => {
         setLatestLightState(
           updateResponseData["smartlife.iot.smartbulb.lightingservice"]
             .transition_light_state
+        );
+      });
+  }
+
+  async function getLightState() {
+    const payload = {
+      method: "passthrough",
+      params: {
+        deviceId: lamp?.deviceId,
+        requestData: JSON.stringify({
+          "smartlife.iot.smartbulb.lightingservice": {
+            get_light_state: {},
+          },
+        }),
+      },
+    };
+    const url = new URL("https://wap.tplinkcloud.com/");
+    url.searchParams.append("token", loginResponse?.result.token as string);
+    await fetch(url.href, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const response = updateResponseSchema.parse(data);
+        const getLightStateResponseData = getLightStateResponseDataSchema.parse(
+          JSON.parse(response.result.responseData)
+        );
+
+        const on_off =
+          getLightStateResponseData["smartlife.iot.smartbulb.lightingservice"]
+            .get_light_state.on_off;
+
+        setLatestLightState(
+          on_off
+            ? getLightStateResponseData[
+                "smartlife.iot.smartbulb.lightingservice"
+              ].get_light_state
+            : {
+                ...getLightStateResponseData[
+                  "smartlife.iot.smartbulb.lightingservice"
+                ].get_light_state.dft_on_state,
+                on_off,
+                err_code:
+                  getLightStateResponseData[
+                    "smartlife.iot.smartbulb.lightingservice"
+                  ].get_light_state.err_code,
+              }
         );
       });
   }
