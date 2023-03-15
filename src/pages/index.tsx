@@ -373,7 +373,12 @@ const Home: NextPage = () => {
               style={{
                 color: hslString,
               }}
-              onClick={autoSwitchInterval.toggle}
+              onClick={() => {
+                if (!autoSwitchInterval.active) {
+                  changeColor().catch((e) => console.error(e));
+                }
+                autoSwitchInterval.toggle();
+              }}
             >
               {autoSwitchInterval.active ? (
                 <BsPauseFill size="1.7rem" title="stop auto-switch" />
