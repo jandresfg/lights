@@ -341,6 +341,47 @@ const Home: NextPage = () => {
             </h2>
           )}
 
+          {/* manual select button */}
+          {latestLightState?.on_off === 1 && !autoSwitchInterval.active && (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="outline"
+              style={{
+                color: hslString,
+              }}
+              onClick={() => {
+                setManuallySelecting((prev) => !prev);
+              }}
+            >
+              {manuallySelecting ? (
+                <BiArrowBack size="1.7rem" title="go back" />
+              ) : (
+                <MdColorLens size="1.7rem" title="select color" />
+              )}
+            </ActionIcon>
+          )}
+
+          {/* manual select color picker */}
+          {manuallySelecting && (
+            <ChromePicker
+              color={{
+                h: Number(latestLightState?.hue),
+                s: Number(latestLightState?.saturation) / 100,
+                l: Number(latestLightState?.brightness) / 100,
+              }}
+              onChangeComplete={(color: ColorResult) => {
+                changeColor({
+                  hue: Math.floor(color.hsl.h),
+                  saturation: Math.floor(color.hsl.s * 100),
+                  brightness: Math.floor(color.hsl.l * 100),
+                  on_off: 1,
+                }).catch((e) => console.error(e));
+              }}
+              disableAlpha
+            />
+          )}
+
           {/* random button */}
           {latestLightState?.on_off === 1 && !autoSwitchInterval.active && (
             <ActionIcon
@@ -429,47 +470,6 @@ const Home: NextPage = () => {
                 roundCaps
               />
             </>
-          )}
-
-          {/* manual select button */}
-          {latestLightState?.on_off === 1 && !autoSwitchInterval.active && (
-            <ActionIcon
-              size="xl"
-              radius="xl"
-              variant="outline"
-              style={{
-                color: hslString,
-              }}
-              onClick={() => {
-                setManuallySelecting((prev) => !prev);
-              }}
-            >
-              {manuallySelecting ? (
-                <BiArrowBack size="1.7rem" title="go back" />
-              ) : (
-                <MdColorLens size="1.7rem" title="select color" />
-              )}
-            </ActionIcon>
-          )}
-
-          {/* manual select color picker */}
-          {manuallySelecting && (
-            <ChromePicker
-              color={{
-                h: Number(latestLightState?.hue),
-                s: Number(latestLightState?.saturation) / 100,
-                l: Number(latestLightState?.brightness) / 100,
-              }}
-              onChangeComplete={(color: ColorResult) => {
-                changeColor({
-                  hue: Math.floor(color.hsl.h),
-                  saturation: Math.floor(color.hsl.s * 100),
-                  brightness: Math.floor(color.hsl.l * 100),
-                  on_off: 1,
-                }).catch((e) => console.error(e));
-              }}
-              disableAlpha
-            />
           )}
 
           {/* on/off button */}
