@@ -73,7 +73,14 @@ export const lightStateSchema = z.object({
 
 export const updateResponseDataSchema = z.object({
   "smartlife.iot.smartbulb.lightingservice": z.object({
-    transition_light_state: lightStateSchema,
+    transition_light_state: z.discriminatedUnion("on_off", [
+      z.object({
+        on_off: z.literal(0),
+        err_code: z.number(),
+        dft_on_state: lightStateSchema.omit({ on_off: true, err_code: true }),
+      }),
+      lightStateSchema.merge(z.object({ on_off: z.literal(1) })),
+    ]),
   }),
 });
 
@@ -222,18 +229,27 @@ const Home: NextPage = () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        // if on_off is 0 the response schema changes
-        if (newState.on_off === 0) {
-          setLatestLightState((curr) => ({ ...curr!, on_off: 0 }));
-          return;
-        }
         const response = updateResponseSchema.parse(data);
         const updateResponseData = updateResponseDataSchema.parse(
           JSON.parse(response.result.responseData)
         );
-        setLatestLightState(
+
+        const on_off =
           updateResponseData["smartlife.iot.smartbulb.lightingservice"]
-            .transition_light_state
+            .transition_light_state.on_off;
+
+        setLatestLightState(
+          on_off
+            ? updateResponseData["smartlife.iot.smartbulb.lightingservice"]
+                .transition_light_state
+            : {
+                ...updateResponseData["smartlife.iot.smartbulb.lightingservice"]
+                  .transition_light_state.dft_on_state,
+                on_off,
+                err_code:
+                  updateResponseData["smartlife.iot.smartbulb.lightingservice"]
+                    .transition_light_state.err_code,
+              }
         );
       });
   }
