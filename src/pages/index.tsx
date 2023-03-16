@@ -1,7 +1,7 @@
 import { ActionIcon, Modal, RingProgress, Slider, Text } from "@mantine/core";
 import { useDisclosure, useInterval } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { type NextPage } from "next";
+import { type GetServerSideProps, type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChromePicker, type ColorResult } from "react-color";
@@ -100,9 +100,11 @@ export const getLightStateResponseDataSchema = z.object({
   }),
 });
 
-const Home: NextPage = () => {
-  const [loginResponse, setLoginResponse] =
-    useState<z.infer<typeof LoginSchema>>();
+type PageProps = {
+  loginResponse: z.infer<typeof LoginSchema>;
+};
+
+const Home: NextPage<PageProps> = ({ loginResponse }) => {
   const [deviceListResponse, setDeviceListResponse] =
     useState<z.infer<typeof deviceListResponseSchema>>();
   const [lamp, setLamp] = useState<z.infer<typeof deviceSchema>>();
@@ -129,38 +131,12 @@ const Home: NextPage = () => {
   };
 
   useEffect(() => {
-    async function login() {
-      const payload = {
-        method: "login",
-        params: {
-          appType: "Kasa_Android",
-          cloudUserName: env.NEXT_PUBLIC_TPLINK_USER,
-          cloudPassword: env.NEXT_PUBLIC_TPLINK_PASSWORD,
-          terminalUUID: v4(),
-        },
-      };
-      await fetch("https://wap.tplinkcloud.com/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          setLoginResponse(LoginSchema.parse(data));
-        });
-    }
-    login().catch(handleError);
-  }, []);
-
-  useEffect(() => {
     if (!loginResponse) return;
 
     async function getLightBulbId() {
       const payload = { method: "getDeviceList" };
       const url = new URL("https://wap.tplinkcloud.com/");
-      url.searchParams.append("token", loginResponse?.result.token as string);
+      url.searchParams.append("token", loginResponse?.result.token);
       await fetch(url.href, {
         method: "POST",
         headers: {
@@ -240,7 +216,7 @@ const Home: NextPage = () => {
       },
     };
     const url = new URL("https://wap.tplinkcloud.com/");
-    url.searchParams.append("token", loginResponse?.result.token as string);
+    url.searchParams.append("token", loginResponse?.result.token);
     await fetch(url.href, {
       method: "POST",
       headers: {
@@ -288,7 +264,7 @@ const Home: NextPage = () => {
       },
     };
     const url = new URL("https://wap.tplinkcloud.com/");
-    url.searchParams.append("token", loginResponse?.result.token as string);
+    url.searchParams.append("token", loginResponse?.result.token);
     await fetch(url.href, {
       method: "POST",
       headers: {
@@ -578,6 +554,32 @@ const Home: NextPage = () => {
       </main>
     </>
   );
+};
+
+export const getServerSideProps: GetServerSideProps<PageProps> = async (
+  context
+) => {
+  const payload = {
+    method: "login",
+    params: {
+      appType: "Kasa_Android",
+      cloudUserName: env.NEXT_PUBLIC_TPLINK_USER,
+      cloudPassword: env.NEXT_PUBLIC_TPLINK_PASSWORD,
+      terminalUUID: v4(),
+    },
+  };
+  const loginResponse = await fetch("https://wap.tplinkcloud.com/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => response.json())
+    .then((data) => LoginSchema.parse(data));
+  return {
+    props: { loginResponse }, // will be passed to the page component as props
+  };
 };
 
 export default Home;
