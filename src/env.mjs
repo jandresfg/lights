@@ -14,8 +14,8 @@ const server = z.object({
  */
 const client = z.object({
   // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
-  NEXT_PUBLIC_TPLINK_USER: z.string().min(1),
-  NEXT_PUBLIC_TPLINK_PASSWORD: z.string().min(1),
+  TPLINK_USER: z.string().min(1),
+  TPLINK_PASSWORD: z.string().min(1),
 });
 
 /**
@@ -26,8 +26,8 @@ const client = z.object({
  */
 const processEnv = {
   NODE_ENV: process.env.NODE_ENV,
-  NEXT_PUBLIC_TPLINK_USER: process.env.NEXT_PUBLIC_TPLINK_USER,
-  NEXT_PUBLIC_TPLINK_PASSWORD: process.env.NEXT_PUBLIC_TPLINK_PASSWORD,
+  TPLINK_USER: process.env.TPLINK_USER,
+  TPLINK_PASSWORD: process.env.TPLINK_PASSWORD,
 };
 
 // Don't touch the part below

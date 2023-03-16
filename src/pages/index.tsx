@@ -563,8 +563,8 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (
     method: "login",
     params: {
       appType: "Kasa_Android",
-      cloudUserName: env.NEXT_PUBLIC_TPLINK_USER,
-      cloudPassword: env.NEXT_PUBLIC_TPLINK_PASSWORD,
+      cloudUserName: env.TPLINK_USER,
+      cloudPassword: env.TPLINK_PASSWORD,
       terminalUUID: v4(),
     },
   };
