@@ -199,12 +199,12 @@ const Home: NextPage = () => {
 
   const autoSwitchInterval = useInterval(() => {
     if (remainingSecondsRef.current && remainingSecondsRef.current > 0) {
-      setRemainingSeconds((val) => val - 200);
+      setRemainingSeconds((val) => val - 100);
     } else {
       changeColor().catch(handleError);
       setRemainingSeconds(autoSwitchFreq);
     }
-  }, 200);
+  }, 100);
 
   useEffect(() => {
     if (autoSwitchFreq !== previousFreq) {
