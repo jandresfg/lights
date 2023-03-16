@@ -1,5 +1,6 @@
 import { ActionIcon, Modal, RingProgress, Slider, Text } from "@mantine/core";
 import { useDisclosure, useInterval } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,6 +11,7 @@ import {
   BsLightbulbOffFill,
   BsPauseFill,
   BsPlayFill,
+  BsXLg,
 } from "react-icons/bs";
 import { FaRandom } from "react-icons/fa";
 import { IoMdInformation } from "react-icons/io";
@@ -114,6 +116,18 @@ const Home: NextPage = () => {
 
   const [opened, { open, close }] = useDisclosure(false); // disclosure for info modal
 
+  const handleError = (e: object) => {
+    console.error(e);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    notifications.show({
+      title: e.toString(),
+      message: null,
+      color: "red",
+      icon: <BsXLg />,
+      autoClose: false,
+    });
+  };
+
   useEffect(() => {
     async function login() {
       const payload = {
@@ -137,7 +151,7 @@ const Home: NextPage = () => {
           setLoginResponse(LoginSchema.parse(data));
         });
     }
-    login().catch((e) => console.error(e));
+    login().catch(handleError);
   }, []);
 
   useEffect(() => {
@@ -159,7 +173,7 @@ const Home: NextPage = () => {
           setDeviceListResponse(deviceListResponseSchema.parse(data));
         });
     }
-    getLightBulbId().catch((e) => console.error(e));
+    getLightBulbId().catch(handleError);
   }, [loginResponse]);
 
   useEffect(() => {
@@ -174,7 +188,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     if (!lamp) return;
 
-    getLightState().catch((e) => console.error(e));
+    getLightState().catch(handleError);
   }, [lamp]);
 
   const remainingSecondsRef = useRef<number>();
@@ -187,7 +201,7 @@ const Home: NextPage = () => {
     if (remainingSecondsRef.current && remainingSecondsRef.current > 0) {
       setRemainingSeconds((val) => val - 200);
     } else {
-      changeColor().catch((e) => console.error(e));
+      changeColor().catch(handleError);
       setRemainingSeconds(autoSwitchFreq);
     }
   }, 200);
@@ -196,7 +210,7 @@ const Home: NextPage = () => {
     if (autoSwitchFreq !== previousFreq) {
       autoSwitchInterval.stop();
       setRemainingSeconds(autoSwitchFreq);
-      changeColor().catch((e) => console.error(e));
+      changeColor().catch(handleError);
       autoSwitchInterval.start();
       setPreviousFreq(autoSwitchFreq);
     }
@@ -399,7 +413,7 @@ const Home: NextPage = () => {
                   saturation: Math.floor(color.hsl.s * 100),
                   brightness: Math.floor(color.hsl.l * 100),
                   on_off: 1,
-                }).catch((e) => console.error(e));
+                }).catch(handleError);
               }}
               disableAlpha
             />
@@ -417,7 +431,7 @@ const Home: NextPage = () => {
               onClick={() => {
                 setChangingColor(true);
                 changeColor()
-                  .catch((e) => console.error(e))
+                  .catch(handleError)
                   .finally(() => {
                     setChangingColor(false);
                   });
@@ -439,7 +453,7 @@ const Home: NextPage = () => {
               }}
               onClick={() => {
                 if (!autoSwitchInterval.active) {
-                  changeColor().catch((e) => console.error(e));
+                  changeColor().catch(handleError);
                 }
                 autoSwitchInterval.toggle();
               }}
@@ -508,7 +522,7 @@ const Home: NextPage = () => {
                 setChangingColor(true);
                 const newValue = latestLightState?.on_off ? 0 : 1;
                 changeColor({ ...latestLightState, on_off: newValue })
-                  .catch((e) => console.error(e))
+                  .catch(handleError)
                   .finally(() => {
                     setChangingColor(false);
                   });
