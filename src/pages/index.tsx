@@ -1,7 +1,6 @@
 import { ActionIcon, Modal, RingProgress, Slider, Text } from "@mantine/core";
 import { useDisclosure, useInterval } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { type NotificationsEvents } from "@mantine/notifications/lib/events";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -119,7 +118,8 @@ const Home: NextPage = () => {
 
   const handleError = (e: object) => {
     console.error(e);
-    (notifications as NotificationsEvents).show({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    notifications.show({
       title: e.toString(),
       message: null,
       color: "red",
