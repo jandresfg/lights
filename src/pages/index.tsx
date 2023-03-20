@@ -454,9 +454,8 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
                   setAutoSwitchFreq(value * 1000);
                 }}
                 label={(value) => `${value} s`}
-                labelAlwaysOn
                 style={{ width: "inherit" }}
-                thumbSize={35}
+                thumbSize={20}
                 styles={() => ({
                   bar: {
                     backgroundColor: hslString,
@@ -464,7 +463,33 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
                   thumb: {
                     borderColor: hslString,
                   },
+                  markFilled: {
+                    borderColor: hslString,
+                    backgroundColor: "white",
+                  },
+                  mark: {
+                    backgroundColor: hslString,
+                  },
                 })}
+                marks={[
+                  { value: 2, label: "2 s" },
+                  { value: 2.5 },
+                  { value: 3, label: "3 s" },
+                  { value: 3.5 },
+                  { value: 4, label: "4 s" },
+                  { value: 4.5 },
+                  { value: 5, label: "5 s" },
+                  { value: 5.5 },
+                  { value: 6, label: "6 s" },
+                  { value: 6.5 },
+                  { value: 7, label: "7 s" },
+                  { value: 7.5 },
+                  { value: 8, label: "8 s" },
+                  { value: 8.5 },
+                  { value: 9, label: "9 s" },
+                  { value: 9.5 },
+                  { value: 10, label: "10 s" },
+                ]}
               />
               <RingProgress
                 sections={[
