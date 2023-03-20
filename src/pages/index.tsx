@@ -330,6 +330,7 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main} style={{ backgroundImage: gradientString }}>
+        <h1 className="text-3xl font-bold underline">Hello world!</h1>
         <div className={styles.container}>
           <h1 className={styles.title}>
             <span
