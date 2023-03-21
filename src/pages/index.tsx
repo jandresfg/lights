@@ -456,7 +456,7 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
                   setAutoSwitchFreq(value * 1000);
                 }}
                 label={(value) => `${value} s`}
-                style={{ width: "inherit" }}
+                className="w-11/12"
                 thumbSize={20}
                 styles={() => ({
                   bar: {
