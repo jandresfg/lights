@@ -544,13 +544,14 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
           {lamp && (
             <>
               <ActionIcon
-                size="xl"
+                size="l"
                 radius="xl"
                 variant="outline"
                 style={{
                   color: hslString,
                 }}
                 onClick={open}
+                className="fixed bottom-1 right-1"
               >
                 <IoMdInformation size="1.7rem" title="info" />
               </ActionIcon>
