@@ -5,6 +5,7 @@ import { type GetServerSideProps, type NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChromePicker, type ColorResult } from "react-color";
+import { AiOutlineWarning } from "react-icons/ai";
 import { BiArrowBack } from "react-icons/bi";
 import {
   BsLightbulb,
@@ -20,17 +21,24 @@ import { v4 } from "uuid";
 import { z } from "zod";
 import { env } from "~/env.mjs";
 
-export const LoginSchema = z.object({
-  error_code: z.number(),
-  result: z.object({
-    accountId: z.string(),
-    regTime: z.string(),
-    countryCode: z.string(),
-    riskDetected: z.number(),
-    email: z.string(),
-    token: z.string(),
+export const LoginSchema = z.union([
+  z.object({
+    error_code: z.literal(0),
+    result: z.object({
+      accountId: z.string(),
+      regTime: z.string(),
+      countryCode: z.string(),
+      riskDetected: z.number(),
+      email: z.string(),
+      token: z.string(),
+    }),
   }),
-});
+  z.object({
+    // ex: { error_code: -20661, msg: 'Account locked' }
+    error_code: z.number(),
+    msg: z.string(),
+  }),
+]);
 
 export const deviceSchema = z.object({
   deviceType: z.string(),
@@ -103,7 +111,25 @@ type PageProps = {
   loginResponse: z.infer<typeof LoginSchema>;
 };
 
+type SuccessfulLoginResponse = {
+  error_code: 0;
+  result: {
+    accountId: string;
+    regTime: string;
+    countryCode: string;
+    riskDetected: number;
+    email: string;
+    token: string;
+  };
+};
+
+type FailedLoginResponse = {
+  error_code: number;
+  msg: string;
+};
+
 const Home: NextPage<PageProps> = ({ loginResponse }) => {
+  const [loginFailedMsg, setLoginFailedMsg] = useState<string>();
   const [deviceListResponse, setDeviceListResponse] =
     useState<z.infer<typeof deviceListResponseSchema>>();
   const [lamp, setLamp] = useState<z.infer<typeof deviceSchema>>();
@@ -132,10 +158,18 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
   useEffect(() => {
     if (!loginResponse) return;
 
+    if ((loginResponse as FailedLoginResponse).msg) {
+      setLoginFailedMsg((loginResponse as FailedLoginResponse).msg);
+      return;
+    }
+
     async function getLightBulbId() {
       const payload = { method: "getDeviceList" };
       const url = new URL("https://wap.tplinkcloud.com/");
-      url.searchParams.append("token", loginResponse?.result.token);
+      url.searchParams.append(
+        "token",
+        (loginResponse as SuccessfulLoginResponse).result.token
+      );
       await fetch(url.href, {
         method: "POST",
         headers: {
@@ -215,7 +249,10 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
       },
     };
     const url = new URL("https://wap.tplinkcloud.com/");
-    url.searchParams.append("token", loginResponse?.result.token);
+    url.searchParams.append(
+      "token",
+      (loginResponse as SuccessfulLoginResponse).result.token
+    );
     await fetch(url.href, {
       method: "POST",
       headers: {
@@ -263,7 +300,10 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
       },
     };
     const url = new URL("https://wap.tplinkcloud.com/");
-    url.searchParams.append("token", loginResponse?.result.token);
+    url.searchParams.append(
+      "token",
+      (loginResponse as SuccessfulLoginResponse).result.token
+    );
     await fetch(url.href, {
       method: "POST",
       headers: {
@@ -343,8 +383,29 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
             </span>
           </h1>
 
-          {/* "loading..." subtitle */}
-          {!lamp && (
+          {loginFailedMsg && (
+            <h2>
+              <span className="flex justify-center items-center">
+                <AiOutlineWarning
+                  style={{
+                    color: hslString,
+                  }}
+                  size="1.7rem"
+                  title="login failed"
+                />
+              </span>
+              <span
+                style={{
+                  color: hslString,
+                }}
+              >
+                Login failed: &quot;{loginFailedMsg}&quot;
+              </span>
+            </h2>
+          )}
+
+          {/* "connecting..." subtitle */}
+          {!loginFailedMsg && !lamp && (
             <h2>
               <span
                 style={{
@@ -584,9 +645,7 @@ const Home: NextPage<PageProps> = ({ loginResponse }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps<PageProps> = async (
-  context
-) => {
+export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
   const payload = {
     method: "login",
     params: {
